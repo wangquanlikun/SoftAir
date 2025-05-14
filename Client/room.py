@@ -57,6 +57,9 @@ class Room:
 
         else:
             # 关机状态下，每分钟变化0.5度，直到变化到初始温度为止
+            if abs(self.current_temp - 25) < 0.5:
+                self.current_temp = 25 # 如果变化0.5以内即到初始温度，则直接设置为初始温度
+
             if self.current_temp > 25:
                 self.current_temp -= 0.5
             elif self.current_temp < 25:
