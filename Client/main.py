@@ -207,11 +207,15 @@ class ClientGUI(QMainWindow):
         if self.mode == 'cool' and self.set_temp < 25:
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
+            self.sleep_mode = False
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp < 30:
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
+            self.sleep_mode = False
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
@@ -219,11 +223,15 @@ class ClientGUI(QMainWindow):
         if self.mode == 'cool' and self.set_temp > 18:
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
+            self.sleep_mode = False
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp > 25:
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
+            self.sleep_mode = False
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
@@ -279,6 +287,9 @@ class ClientGUI(QMainWindow):
                 request_mode=self.mode,
                 request_fan=self.fan_index
             ))
+            if self.send_timer.isActive():
+                self.send_timer.stop()
+                self.request_list.clear()
         elif (self.mode=='heat' and self.current_temp>=self.set_temp) and self.power_on and (not self.sleep_mode):
             self.sleep_mode = True
             self.room.stop_wind()
@@ -289,16 +300,14 @@ class ClientGUI(QMainWindow):
                 request_mode=self.mode,
                 request_fan=self.fan_index
             ))
+            if self.send_timer.isActive():
+                self.send_timer.stop()
+                self.request_list.clear()
 
         if abs(self.current_temp - self.set_temp) > 1 and self.sleep_mode and self.power_on:
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
-            self.client.send_message(RequestMessage(
-                request_on_off=True,
-                request_temp=self.set_temp,
-                request_mode=self.mode,
-                request_fan=self.fan_index
-            ))
+            self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
 if __name__ == '__main__':
