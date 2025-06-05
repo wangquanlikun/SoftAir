@@ -3,14 +3,14 @@ from typing import cast
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
     QPushButton, QLCDNumber, QLabel, QSizePolicy, QGraphicsColorizeEffect,
-    QMessageBox
+    QMessageBox, QInputDialog
 )
 from PyQt5.QtGui import QIcon
 from PyQt5.QtSvg import QSvgWidget
-from PyQt5.QtCore import Qt, QSize, pyqtBoundSignal, QTimer
+from PyQt5.QtCore import Qt, QSize, pyqtBoundSignal, QTimer, QEventLoop
 
-from Client.client import AirconClient, RequestMessage
-from Client.room import Room
+from client import AirconClient, RequestMessage
+from room import Room
 
 class ClientGUI(QMainWindow):
     def __init__(self):
@@ -22,6 +22,25 @@ class ClientGUI(QMainWindow):
 
         # 房间
         self.room = Room()
+        while True:
+            room_number, ok = QInputDialog.getText(self, "输入房间号", "请输入当前房间号（例如：888）：")
+            if ok and room_number.strip():
+                self.room.set_room_id(room_number.strip())
+                break
+            else:
+                QMessageBox.warning(self, "输入错误", "房间号不能为空，请重新输入。")
+        while True:
+            temp_str, ok = QInputDialog.getText(self, "设置初始温度", "请输入房间初始温度（例如：23.5）：")
+            if ok:
+                try:
+                    initial_temperature = float(temp_str)
+                    if initial_temperature < 10 or initial_temperature > 35:
+                        QMessageBox.critical(self, "温度范围错误", "请输入10到35之间的温度。")
+                        continue
+                    self.room.init_current_temp(initial_temperature)
+                    break
+                except ValueError:
+                    QMessageBox.critical(self, "格式错误", "请输入有效的浮点数作为温度。")
         self.current_temp_timer = QTimer(self)
         cast(pyqtBoundSignal, self.current_temp_timer.timeout).connect(self.refresh_current_temp)
         self.current_temp_timer.start(1000) # 每秒刷新一次当前温度
@@ -33,7 +52,7 @@ class ClientGUI(QMainWindow):
         self.current_temp = self.room.get_current_temp()
         self.set_temp = 25.0
         self.fan_speeds_show = ['|  ', '|| ', '|||']
-        self.fan_index = 0
+        self.fan_index = 1 # 缺省风速为中速
 
         self.request_list = [] # 请求列表
         self.send_timer = QTimer(self) # 发送请求计时器
@@ -56,12 +75,33 @@ class ClientGUI(QMainWindow):
         base_layout.addStretch(1)
 
         # 前后端连接
-        self.client = AirconClient()
-        if self.client.connect():
-            self.connect_color_effect.setColor(Qt.green)
-        else:
-            QMessageBox.critical(self, "连接失败", "无法连接到服务器，请检查网络设置。")
-            self.close()
+        self.client = AirconClient(self.room.get_room_id())
+        self.client.server_connect()
+
+        loop = QEventLoop()
+        QTimer.singleShot(400, loop.quit)  # 等待连接400ms
+        loop.exec_() # 暂停400ms同时不打断Qt事件
+
+        while True:
+            if self.client.connected():
+                self.connect_color_effect.setColor(Qt.green)
+                break
+            else:
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle("连接失败")
+                msg_box.setText("无法连接到服务器，请检查网络设置。")
+                msg_box.setIcon(QMessageBox.Critical)
+                msg_box.setStandardButtons(QMessageBox.Retry | QMessageBox.Cancel)
+                retry_button = msg_box.button(QMessageBox.Retry)
+                retry_button.setText("重试")
+                cancel_button = msg_box.button(QMessageBox.Cancel)
+                cancel_button.setText("取消")
+                ret = msg_box.exec_()
+                if ret == QMessageBox.Retry:
+                    self.client.server_connect()
+                elif ret == QMessageBox.Cancel:
+                    QMessageBox.information(self, "提示", "程序将退出。")
+                    sys.exit(0)
 
     def _create_button_area(self):
         container = QWidget()
@@ -102,10 +142,6 @@ class ClientGUI(QMainWindow):
         self.btn_fan.setIconSize(QSize(48, 48))
         cast(pyqtBoundSignal, self.btn_fan.clicked).connect(self.cycle_fan)
         layout.addWidget(self.btn_fan)
-
-        # 当关机时禁用所有按钮
-        for w in [self.btn_plus, self.btn_minus, self.btn_mode, self.btn_fan]:
-            w.setEnabled(False)
 
         return container
 
@@ -154,7 +190,7 @@ class ClientGUI(QMainWindow):
         below_layout.addStretch(5)
 
         # 风速文字显示
-        self.lbl_fan_speed = QLabel(f"风速:  - ")
+        self.lbl_fan_speed = QLabel(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
         self.lbl_fan_speed.setAlignment(Qt.AlignCenter)
         below_layout.addWidget(self.lbl_fan_speed, stretch=1)
         below_layout.addStretch(5)
@@ -177,17 +213,16 @@ class ClientGUI(QMainWindow):
 
     def toggle_power(self):
         self.power_on = not self.power_on
+        self.sleep_mode = False
         self.request_service()
         icon = "toggle-on.svg" if self.power_on else "toggle-off.svg"
         self.btn_power.setIcon(QIcon(f"./resource/{icon}"))
-        for w in [self.btn_plus, self.btn_minus, self.btn_mode, self.btn_fan]:
-            w.setEnabled(self.power_on)
 
-        if self.power_on:
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+        if self.power_on and (not self.sleep_mode):
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         else:
-            self.lbl_fan_speed.setText("风速:  - ")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.room.stop_wind()
 
     def switch_mode(self):
@@ -208,14 +243,14 @@ class ClientGUI(QMainWindow):
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp < 30:
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
@@ -224,14 +259,14 @@ class ClientGUI(QMainWindow):
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp > 25:
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
@@ -239,8 +274,10 @@ class ClientGUI(QMainWindow):
         self.fan_index = (self.fan_index + 1) % len(self.fan_speeds_show)
         self.request_service()
         self.room.set_wind(self.set_temp, self.fan_index, self.mode)
-        self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
-
+        if self.power_on and (not self.sleep_mode):
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+        else:
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
 
     def request_service(self):
         self.request_list.append(RequestMessage(
@@ -266,12 +303,12 @@ class ClientGUI(QMainWindow):
         if self.power_on:
             self.btn_power.setIcon(QIcon("./resource/toggle-on.svg"))
             self.btn_power.setChecked(True)
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         else:
             self.btn_power.setIcon(QIcon("./resource/toggle-off.svg"))
             self.btn_power.setChecked(False)
-            self.lbl_fan_speed.setText("风速:  - ")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.room.stop_wind()
 
     def refresh_current_temp(self):
@@ -280,7 +317,7 @@ class ClientGUI(QMainWindow):
         if (self.mode=='cool' and self.current_temp<=self.set_temp) and self.power_on and (not self.sleep_mode):
             self.sleep_mode = True
             self.room.stop_wind()
-            self.lbl_fan_speed.setText("风速:  - ")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.client.send_message(RequestMessage(
                 request_on_off=False,
                 request_temp=self.set_temp,
@@ -293,7 +330,7 @@ class ClientGUI(QMainWindow):
         elif (self.mode=='heat' and self.current_temp>=self.set_temp) and self.power_on and (not self.sleep_mode):
             self.sleep_mode = True
             self.room.stop_wind()
-            self.lbl_fan_speed.setText("风速:  - ")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.client.send_message(RequestMessage(
                 request_on_off=False,
                 request_temp=self.set_temp,
@@ -305,8 +342,10 @@ class ClientGUI(QMainWindow):
                 self.request_list.clear()
 
         if abs(self.current_temp - self.set_temp) > 1 and self.sleep_mode and self.power_on:
+            if (self.mode=='heat' and self.current_temp>=self.set_temp) or (self.mode=='cool' and self.current_temp<=self.set_temp):
+                return
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]}")
+            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 

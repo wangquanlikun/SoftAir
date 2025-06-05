@@ -3,6 +3,7 @@ from PyQt5.QtCore import pyqtBoundSignal, QTimer
 
 class Room:
     def __init__(self):
+        self.room_id = '000'
         self.current_temp = 25
         self.running = False
         self.set_temp = 25
@@ -13,6 +14,13 @@ class Room:
         cast(pyqtBoundSignal, self.refresh_temp_timer.timeout).connect(self.change_temp)
         self.refresh_temp_timer.start(60000)
 
+    def set_room_id(self, room_id):
+        self.room_id = room_id
+    def get_room_id(self):
+        return self.room_id
+
+    def init_current_temp(self, temp):
+        self.current_temp = temp
     def get_current_temp(self):
         return self.current_temp
 
