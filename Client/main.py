@@ -286,13 +286,14 @@ class ClientGUI(QMainWindow):
         else:
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
 
-    def request_service(self, type = 0):
+    def request_service(self, type):
         self.request_list.append(RequestMessage(
             request_on_off=self.power_on and (not self.sleep_mode),
             request_temp=self.set_temp,
             request_mode=self.mode,
             request_fan=self.fan_index,
-            request_type=type
+            request_type=type,
+            now_room_temp=self.current_temp
         ))
         # 计时：刷新计时器为1s，1s到后只发送最后1次的指令参数
         if self.send_timer.isActive():
@@ -335,7 +336,8 @@ class ClientGUI(QMainWindow):
                 request_temp=self.set_temp,
                 request_mode=self.mode,
                 request_fan=self.fan_index,
-                request_type=1
+                request_type=1,
+                now_room_temp= self.current_temp
             ))
             if self.send_timer.isActive():
                 self.send_timer.stop()
@@ -349,7 +351,8 @@ class ClientGUI(QMainWindow):
                 request_temp=self.set_temp,
                 request_mode=self.mode,
                 request_fan=self.fan_index,
-                request_type=1
+                request_type=1,
+                now_room_temp= self.current_temp
             ))
             if self.send_timer.isActive():
                 self.send_timer.stop()

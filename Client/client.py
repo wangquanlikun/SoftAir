@@ -1,7 +1,8 @@
 class RequestMessage:
-    def __init__(self,request_on_off ,request_temp, request_mode, request_fan, request_type = 0):
+    def __init__(self,request_on_off ,request_temp, request_mode, request_fan, request_type, now_room_temp):
         self.on_off = request_on_off
         self.temp = request_temp
+        self.room_temp = now_room_temp
         self.mode = request_mode
         self.fan = request_fan
         self.type = request_type
@@ -65,7 +66,22 @@ class AirconClient:
                 json_msg = {
                     "roomId": self.room_id,
                     "state": "on" if msg.on_off else "off",
-                    "speed": msg.fan
+                    "speed": msg.fan,
+                    "now_temp": msg.room_temp,
+                    "set_temp": msg.temp,
+                    "mode": msg.mode,
+                    "new_request": 1
+                }
+                self.ws.sendTextMessage(json.dumps(json_msg))
+            elif msg.type == 0:
+                json_msg = {
+                    "roomId": self.room_id,
+                    "state": "on" if msg.on_off else "off",
+                    "speed": msg.fan,
+                    "now_temp": msg.room_temp,
+                    "set_temp": msg.temp,
+                    "mode": msg.mode,
+                    "new_request": 0
                 }
                 self.ws.sendTextMessage(json.dumps(json_msg))
         else:
