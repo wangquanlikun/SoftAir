@@ -1,0 +1,383 @@
+:root {
+  --primary-color: #07B2D9;
+  --secondary-color: #88DFF2;
+  --background-color: #C2E5F2;
+  --card-background: #ffffff;
+  --text-color: #333333;
+  --light-text-color: #f8f9fa;
+  --border-color: #dee2e6;
+  --input-border-color: #ced4da;
+  --placeholder-text-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+.manager-container {
+  background-color: var(--card-background);
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 900px;
+  margin: 2rem auto;
+}
+
+.manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.manager-header h1 {
+  color: var(--primary-color);
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.indicator.connected {
+  background-color: var(--success-color);
+  box-shadow: 0 0 5px var(--success-color);
+}
+
+.indicator.disconnected {
+  background-color: var(--danger-color);
+  box-shadow: 0 0 5px var(--danger-color);
+}
+
+.logout-button {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+}
+
+.report-controls, .report-display-area {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: #fdfdff;
+}
+
+.report-controls h2, .report-display-area h2 {
+  font-size: 1.3rem;
+  color: var(--text-color);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.date-picker-group {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.form-group input[type="datetime-local"] {
+  padding: 0.6rem;
+  border: 1px solid var(--input-border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  min-width: 220px;
+}
+
+.control-button {
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--primary-color);
+  background-color: var(--card-background);
+  color: var(--primary-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.control-button.primary-button {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+}
+
+.control-button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.control-button:disabled {
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.export-options {
+  margin-top: 1rem;
+}
+
+.report-content-placeholder {
+  padding: 2rem;
+  text-align: center;
+  color: var(--placeholder-text-color);
+  border: 2px dashed var(--border-color);
+  border-radius: 4px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-content {
+  padding: 1rem;
+}
+
+.report-item {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.report-key {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+#report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+#report-table th, #report-table td {
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+#report-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+#report-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+#report-table tr:hover {
+  background-color: #f0f7fb;
+}
+
+.loading-indicator {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: var(--card-background);
+  margin: auto;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.modal-content p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.modal-button {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.modal-button:hover {
+  opacity: 0.9;
+}
+
+/* 打印样式 */
+@media print {
+  body {
+    background-color: white;
+    padding: 0;
+  }
+  
+  .manager-container {
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .manager-header, .report-controls, .export-options, .logout-button, .connection-status {
+    display: none;
+  }
+  
+  .report-display-area {
+    border: none;
+    padding: 0;
+  }
+  
+  .report-display-area h2 {
+    text-align: center;
+    font-size: 18pt;
+    margin-bottom: 20pt;
+  }
+  
+  #report-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  #report-table th, #report-table td {
+    border: 1px solid #000;
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .manager-container {
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+  
+  .manager-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .manager-header h1 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .connection-status {
+    margin-bottom: 0.5rem;
+  }
+  
+  .date-picker-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .form-group input[type="datetime-local"] {
+    min-width: unset;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .control-button {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+  }
+  
+  .export-options {
+    display: flex;
+    flex-direction: column;
+  }
+}

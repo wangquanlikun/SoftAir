@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoftAir - 空调系统管理控制台</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>SoftAir 管理系统</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li class="nav-item active" data-tab="rooms-tab">
+                    <img src="./icons/空调.svg" alt="房间状态" class="nav-icon"> 房间状态
+                </li>
+                <li class="nav-item" data-tab="service-queue-tab">
+                    <img src="./icons/serving.svg" alt="服务队列" class="nav-icon"> 服务队列
+                </li>
+                <li class="nav-item" data-tab="waiting-queue-tab">
+                    <img src="./icons/waiting.svg" alt="等待队列" class="nav-icon"> 等待队列
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="#" id="logout-btn" class="logout-button">
+                    <img src="./icons/退出登录.svg" alt="退出登录" class="nav-icon"> 退出系统
+                </a>
+            </div>
+        </nav>
+
+        <div class="content-area">
+            <header class="content-header">
+                <div class="search-bar">
+                    <input type="text" id="room-search" placeholder="搜索房间号...">
+                    <button id="search-btn">
+                        <img src="./icons/搜索.svg" alt="搜索" class="button-icon">
+                        搜索
+                    </button>
+                </div>
+                <div class="system-controls">
+                    <button id="system-on-btn" class="system-btn">
+                        <img src="./icons/开启.svg" alt="开启系统" class="button-icon">
+                        开启系统
+                    </button>
+                    <button id="system-off-btn" class="system-btn danger">
+                        <img src="./icons/关闭.svg" alt="关闭系统" class="button-icon">
+                        关闭系统
+                    </button>
+                </div>
+            </header>
+
+            <main class="content-body">
+                <div id="rooms-tab" class="tab-content active">
+                    <h2>房间状态一览</h2>
+                    <div id="rooms-container" class="rooms-grid">
+                        <div class="loading-indicator">
+                            <span>正在加载房间信息...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="service-queue-tab" class="tab-content">
+                    <h2>服务队列</h2>
+                    <div id="service-queue-container" class="queue-container">
+                        <div class="loading-indicator">
+                            <span>正在加载服务队列...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="waiting-queue-tab" class="tab-content">
+                    <h2>等待队列</h2>
+                    <div id="waiting-queue-container" class="queue-container">
+                        <div class="loading-indicator">
+                            <span>正在加载等待队列...</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 房间控制模态框 -->
+    <div id="room-control-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-room-title">房间控制</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="control-group">
+                    <label for="room-state">空调状态:</label>
+                    <select id="room-state">
+                        <option value="on">开启</option>
+                        <option value="off">关闭</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="room-mode">工作模式:</label>
+                    <select id="room-mode">
+                        <option value="cool">制冷</option>
+                        <option value="heat">制热</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="room-temp">目标温度:</label>
+                    <input type="number" id="room-temp" min="16" max="30" step="0.5" value="25">
+                    <span class="unit">°C</span>
+                </div>
+                <div class="control-group">
+                    <label for="room-speed">风速:</label>
+                    <select id="room-speed">
+                        <option value="0">低风速</option>
+                        <option value="1">中风速</option>
+                        <option value="2">高风速</option>
+                    </select>
+                </div>
+                <div class="room-info">
+                    <p>当前温度: <span id="current-temp">--</span>°C</p>
+                    <p>当前账单: <span id="current-bill">0.00</span> 元</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="apply-settings-btn" class="primary-btn">应用设置</button>
+                <button class="cancel-btn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统提示模态框 -->
+    <div id="alert-modal" class="modal">
+        <div class="modal-content alert-content">
+            <div class="modal-header">
+                <h3 id="alert-title">系统提示</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="alert-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="primary-btn close-modal">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 连接状态指示器 -->
+    <div id="connection-status" class="disconnected">
+        <span id="connection-text">未连接</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

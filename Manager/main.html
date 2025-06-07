@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoftAir - 经理报表</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="manager-container">
+    <header class="manager-header">
+      <h1>经理报表系统</h1>
+      <div class="connection-status">
+        <span id="connection-indicator" class="indicator disconnected"></span>
+        <span id="connection-text">未连接</span>
+      </div>
+      <a href="#" class="logout-button" title="退出登录" id="logout-button">退出</a>
+    </header>
+
+    <section class="report-controls">
+      <h2>查询条件</h2>
+      <div class="date-picker-group">
+        <div class="form-group">
+          <label for="start-date">起始日期:</label>
+          <input type="datetime-local" id="start-date" name="start-date">
+        </div>
+        <div class="form-group">
+          <label for="end-date">结束日期:</label>
+          <input type="datetime-local" id="end-date" name="end-date">
+        </div>
+      </div>
+      <button id="view-report-button" class="control-button primary-button" title="点击生成并查看报表">查看报表</button>
+      <div class="export-options">
+        <button id="export-report-button" class="control-button" title="导出报表为CSV文件">导出报表</button>
+        <button id="print-report-button" class="control-button" title="打印当前报表">打印报表</button>
+      </div>
+    </section>
+
+    <section class="report-display-area">
+      <h2>报表结果</h2>
+      <div id="report-content" class="report-content-placeholder">
+        <p>请选择日期范围并点击"查看报表"以生成报表。</p>
+      </div>
+      <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>加载中，请稍候...</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- 错误提示弹窗 -->
+  <div class="modal" id="modal-error">
+    <div class="modal-content">
+      <span class="close-button" id="close-modal-button" title="关闭弹窗">&times;</span>
+      <p id="modal-text"></p>
+      <button class="modal-button" id="modal-confirm-button">确 定</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
