@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoftAir - 酒店前台系统</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="frontdesk-layout">
+    <!-- 侧边栏导航 -->
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h2>SoftAir 前台系统</h2>
+      </div>
+      <ul class="sidebar-nav">
+        <li class="nav-item active" id="nav-all-rooms">
+          <img src="icons/已入住.svg" alt="所有房间" class="nav-icon"> 所有房间
+        </li>
+        <li class="nav-item" id="nav-occupied-rooms">
+          <img src="icons/已入住.svg" alt="已入住" class="nav-icon"> 已入住房间
+        </li>
+        <li class="nav-item" id="nav-vacant-rooms">
+          <img src="icons/空闲.svg" alt="空闲" class="nav-icon"> 空闲房间
+        </li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="#" class="logout-button-sidebar" title="退出登录">
+          <img src="icons/退出登录.svg" alt="Logout" class="nav-icon"> 退出登录
+        </a>
+      </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <div class="content-area-frontdesk">
+      <header class="content-header-frontdesk">
+        <div class="search-bar-frontdesk">
+          <input type="text" id="room-search-input" placeholder="搜索房间号...">
+          <button id="search-room-button" title="搜索">
+            <img src="icons/搜索.svg" alt="Search" class="button-icon"> 搜索
+          </button>
+        </div>
+        <div class="header-actions-frontdesk">
+          <button id="check-in-button" class="header-action-button">
+            <img src="icons/入住.svg" alt="开房" class="button-icon"> 办理入住
+          </button>
+          <button id="check-out-button" class="header-action-button">
+            <img src="icons/退房.svg" alt="退房" class="button-icon"> 办理退房
+          </button>
+          <button id="refresh-button" class="header-action-button">
+            <img src="icons/刷新.svg" alt="刷新" class="button-icon"> 刷新
+          </button>
+        </div>
+      </header>
+
+      <main class="tab-content-wrapper-frontdesk">
+        <!-- 所有房间视图 -->
+        <section id="all-rooms-view" class="room-grid-area-frontdesk">
+          <h1 class="view-title">所有房间列表</h1>
+          <div id="all-rooms-container" class="rooms-container">
+            <p class="placeholder-text">正在加载房间信息...</p>
+          </div>
+        </section>
+        
+        <!-- 已入住房间视图 -->
+        <section id="occupied-rooms-view" class="room-grid-area-frontdesk" style="display: none;">
+          <h1 class="view-title">已入住房间列表</h1>
+          <div id="occupied-rooms-container" class="rooms-container">
+            <p class="placeholder-text">正在加载已入住房间信息...</p>
+          </div>
+        </section>
+        
+        <!-- 空闲房间视图 -->
+        <section id="vacant-rooms-view" class="room-grid-area-frontdesk" style="display: none;">
+          <h1 class="view-title">空闲房间列表</h1>
+          <div id="vacant-rooms-container" class="rooms-container">
+            <p class="placeholder-text">正在加载空闲房间信息...</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- 办理入住弹窗 -->
+  <div class="modal" id="modal-check-in">
+    <div class="modal-content">
+      <span class="close-button" id="close-check-in">&times;</span>
+      <h3>办理入住</h3>
+      <div class="form-group">
+        <label for="checkin-guest-name">顾客姓名:</label>
+        <input type="text" id="checkin-guest-name" placeholder="请输入顾客姓名" required>
+      </div>
+      <div class="form-group">
+        <label for="checkin-guest-id">顾客身份证号:</label>
+        <input type="text" id="checkin-guest-id" placeholder="请输入身份证号码" required>
+      </div>
+      <div class="form-group">
+        <label for="checkin-room-select">选择房间 (可选):</label>
+        <select id="checkin-room-select">
+          <option value="000">自动分配房间</option>
+          <!-- 空闲房间选项将在此处动态生成 -->
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button id="confirm-check-in-button" class="modal-button primary-button">确认入住</button>
+        <button id="cancel-check-in-button" class="modal-button">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 办理退房弹窗 -->
+  <div class="modal" id="modal-check-out">
+    <div class="modal-content">
+      <span class="close-button" id="close-check-out">&times;</span>
+      <h3>办理退房</h3>
+      <div class="form-group">
+        <label for="checkout-room-select">选择房间:</label>
+        <select id="checkout-room-select">
+          <!-- 已入住房间选项将在此处动态生成 -->
+          <option value="">请选择房间</option>
+        </select>
+      </div>
+      <div id="checkout-info" style="display: none;">
+        <p>房间号: <span id="checkout-room-id"></span></p>
+        <p>消费总额: <span id="checkout-total-cost">0.00</span> 元</p>
+        <div class="modal-actions">
+          <button id="view-bill-button" class="modal-button">查看账单</button>
+          <button id="view-detail-button" class="modal-button">查看详单</button>
+          <button id="confirm-check-out-button" class="modal-button primary-button">确认退房</button>
+          <button id="cancel-check-out-button" class="modal-button">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 账单/详单弹窗 -->
+  <div class="modal" id="modal-bill-detail">
+    <div class="modal-content">
+      <span class="close-button" id="close-bill-detail">&times;</span>
+      <h3 id="bill-detail-title">账单信息</h3>
+      
+      <!-- 详单查询选项 -->
+      <div id="detail-query-options" style="display: none;">
+        <div class="query-type-selector">
+          <label>查询方式:</label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="query-type" value="user" checked> 按用户ID查询
+            </label>
+            <label>
+              <input type="radio" name="query-type" value="time"> 按时间范围查询
+            </label>
+          </div>
+        </div>
+        
+        <!-- 用户ID查询选项 -->
+        <div id="user-query-options" class="form-group">
+          <label for="detail-user-id">用户身份证号:</label>
+          <input type="text" id="detail-user-id" placeholder="请输入用户身份证号">
+        </div>
+        
+        <!-- 时间范围查询选项 -->
+        <div id="time-query-options" class="form-group" style="display: none;">
+          <div class="form-group">
+            <label for="detail-start-time">开始时间:</label>
+            <input type="datetime-local" id="detail-start-time">
+          </div>
+          <div class="form-group">
+            <label for="detail-end-time">结束时间:</label>
+            <input type="datetime-local" id="detail-end-time">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <button id="submit-detail-query" class="modal-button primary-button">查询</button>
+        </div>
+      </div>
+      
+      <div id="bill-detail-content">
+        <!-- 账单/详单内容将在此处动态生成 -->
+      </div>
+      <div class="modal-actions">
+        <button id="print-bill-detail-button" class="modal-button">打印</button>
+        <button id="close-bill-detail-button" class="modal-button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示弹窗 -->
+  <div class="modal" id="modal-message">
+    <div class="modal-content">
+      <h3 id="message-title">提示</h3>
+      <p id="message-content"></p>
+      <div class="modal-actions">
+        <button id="message-confirm-button" class="modal-button primary-button">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

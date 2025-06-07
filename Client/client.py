@@ -32,7 +32,7 @@ class AirconClient:
         self.ws.connected.connect(self.on_connected)
         self.ws.textMessageReceived.connect(self.on_message)
         self.ws.disconnected.connect(self.on_disconnected)
-        server_url = f"ws://{self.host}:{self.port}/ws/room"
+        server_url = f"ws://{self.host}:{self.port}/ws/room?roomId={self.room_id}"
         print(f"正在尝试连接到 {server_url} ...")
         self.ws.open(QUrl(server_url))
 

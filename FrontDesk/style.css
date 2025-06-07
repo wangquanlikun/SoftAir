@@ -1,0 +1,537 @@
+/* 主要变量定义 */
+:root {
+  --primary-color: #07B2D9;
+  --secondary-color: #88DFF2;
+  --background-color: #f0f2f5;
+  --content-bg-color: #ffffff;
+  --sidebar-bg-color: #072f54;
+  --sidebar-text-color: #a6adb4;
+  --sidebar-active-bg: var(--primary-color);
+  --sidebar-active-text: #ffffff;
+  --sidebar-hover-bg: #1890ff1a;
+  --text-color: #333333;
+  --light-text-color: #f8f9fa;
+  --border-color: #e8e8e8;
+  --input-border-color: #d9d9d9;
+  --placeholder-text-color: #bfbfbf;
+  --danger-color: #dc3545;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  --icon-size: 16px;
+}
+
+/* 全局样式 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* 布局样式 */
+.frontdesk-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* 侧边栏样式 */
+.sidebar {
+  width: 220px;
+  background-color: var(--sidebar-bg-color);
+  color: var(--sidebar-text-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar-header {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #002140;
+}
+
+.sidebar-header h2 {
+  color: var(--light-text-color);
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  flex-grow: 1;
+}
+
+.nav-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.nav-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  filter: invert(70%) sepia(13%) saturate(293%) hue-rotate(169deg) brightness(90%) contrast(86%);
+}
+
+.nav-item:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-active-text);
+}
+
+.nav-item:hover .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+.nav-item.active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+}
+
+.nav-item.active .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid #002140;
+}
+
+.logout-button-sidebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background-color: transparent;
+  color: var(--sidebar-text-color);
+  border: 1px solid var(--sidebar-text-color);
+  border-radius: 4px;
+  text-decoration: none;
+  text-align: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.logout-button-sidebar:hover {
+  background-color: var(--danger-color);
+  color: var(--light-text-color);
+  border-color: var(--danger-color);
+}
+
+.logout-button-sidebar:hover .nav-icon {
+  filter: brightness(0) invert(1);
+}
+
+/* 内容区域样式 */
+.content-area-frontdesk {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.content-header-frontdesk {
+  padding: 12px 24px;
+  background-color: var(--content-bg-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.search-bar-frontdesk {
+  display: flex;
+  gap: 8px;
+  flex-grow: 1;
+  margin-right: 16px;
+}
+
+.search-bar-frontdesk input[type="text"] {
+  padding: 8px 12px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 4px;
+  min-width: 280px;
+  font-size: 14px;
+  flex-grow: 1;
+}
+
+.search-bar-frontdesk button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.search-bar-frontdesk button:hover {
+  opacity: 0.85;
+}
+
+.button-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  filter: brightness(0) invert(1);
+}
+
+.header-actions-frontdesk {
+  display: flex;
+  gap: 12px;
+}
+
+.header-action-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.header-action-button:hover {
+  opacity: 0.85;
+}
+
+/* 房间列表内容区域 */
+.tab-content-wrapper-frontdesk {
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: auto;
+  background-color: var(--background-color);
+}
+
+.room-grid-area-frontdesk {
+  width: 100%;
+}
+
+.rooms-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.view-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: var(--primary-color);
+}
+
+/* 房间卡片样式 */
+.room-card {
+  background-color: var(--content-bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  min-height: 180px;
+  position: relative;
+}
+
+.room-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.room-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.room-card-header h4 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.room-card p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.room-card p strong {
+  color: var(--text-color);
+}
+
+.room-card-actions {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+}
+
+.card-action-button {
+  padding: 7px 14px;
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: opacity 0.2s ease;
+}
+
+.card-action-button:hover {
+  opacity: 0.85;
+}
+
+.status-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 5px 10px;
+  border-radius: 0 6px 0 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+}
+
+.status-free {
+  background-color: var(--success-color);
+}
+
+.status-busy {
+  background-color: var(--warning-color);
+}
+
+.placeholder-text {
+  color: var(--placeholder-text-color);
+  text-align: center;
+  padding: 32px;
+  font-style: italic;
+  font-size: 1rem;
+  grid-column: 1 / -1;
+}
+
+/* 弹窗样式 */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: var(--content-bg-color);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #777;
+}
+
+.close-button:hover {
+  color: var(--danger-color);
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--primary-color);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.modal-button:hover {
+  background-color: #e6e6e6;
+}
+
+.primary-button {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.primary-button:hover {
+  background-color: #068eae;
+  border-color: #068eae;
+}
+
+/* 详单查询选项样式 */
+.query-type-selector {
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 15px;
+}
+
+.query-type-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+  margin: 0;
+}
+
+input[type="datetime-local"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#detail-query-options {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border-color);
+}
+
+#submit-detail-query {
+  width: 100%;
+}
+
+/* 响应式设计 */
+@media (max-width: 992px) {
+  .search-bar-frontdesk {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .header-actions-frontdesk {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -220px;
+    z-index: 1100;
+    transition: left 0.3s ease-in-out;
+    height: 100%;
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .content-header-frontdesk {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .search-bar-frontdesk {
+    width: 100%;
+  }
+  
+  .search-bar-frontdesk input[type="text"] {
+    min-width: 0;
+    flex-grow: 1;
+  }
+  
+  .tab-content-wrapper-frontdesk {
+    padding: 16px;
+  }
+  
+  .rooms-container {
+    grid-template-columns: 1fr;
+  }
+}
