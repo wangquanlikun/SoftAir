@@ -288,7 +288,7 @@ class ClientGUI(QMainWindow):
 
     def request_service(self, type):
         self.request_list.append(RequestMessage(
-            request_on_off=self.power_on and (not self.sleep_mode),
+            request_on_off="pause" if self.sleep_mode else ("on" if self.power_on else "off"),
             request_temp=self.set_temp,
             request_mode=self.mode,
             request_fan=self.fan_index,
@@ -332,7 +332,7 @@ class ClientGUI(QMainWindow):
             self.room.stop_wind()
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.client.send_message(RequestMessage(
-                request_on_off=False,
+                request_on_off="pause",
                 request_temp=self.set_temp,
                 request_mode=self.mode,
                 request_fan=self.fan_index,
@@ -347,7 +347,7 @@ class ClientGUI(QMainWindow):
             self.room.stop_wind()
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
             self.client.send_message(RequestMessage(
-                request_on_off=False,
+                request_on_off="pause",
                 request_temp=self.set_temp,
                 request_mode=self.mode,
                 request_fan=self.fan_index,

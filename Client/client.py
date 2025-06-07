@@ -54,7 +54,8 @@ class AirconClient:
     def on_message(self, message: str):
         print(f"Received message: {message}")
         json_msg = json.loads(message)
-        state = True if json_msg['state'] == 'on' else False
+        state = False if json_msg['state'] == 'off' else True
+        # 'state' == 'pause' 时，虽然休眠，但是系统本身开机
         bill = json_msg['bill']
         self.change_state(state)
         self.change_bill(bill)
@@ -65,7 +66,7 @@ class AirconClient:
             if msg.type == 1 or msg.type == 2:
                 json_msg = {
                     "roomId": self.room_id,
-                    "state": "on" if msg.on_off else "off",
+                    "state": msg.on_off,
                     "speed": msg.fan,
                     "now_temp": msg.room_temp,
                     "set_temp": msg.temp,
@@ -76,7 +77,7 @@ class AirconClient:
             elif msg.type == 0:
                 json_msg = {
                     "roomId": self.room_id,
-                    "state": "on" if msg.on_off else "off",
+                    "state": msg.on_off,
                     "speed": msg.fan,
                     "now_temp": msg.room_temp,
                     "set_temp": msg.temp,

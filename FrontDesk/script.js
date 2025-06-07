@@ -326,16 +326,16 @@ function renderRooms() {
     // 渲染房间卡片
     filteredRooms.forEach(room => {
         const isFree = room.status === 'free';
-        const card = createRoomCard(room);
         
+        // 为每个容器创建独立的卡片，而不是使用克隆
         // 添加到所有房间视图
-        allRoomsContainer.appendChild(card.cloneNode(true));
+        allRoomsContainer.appendChild(createRoomCard(room));
         
         // 添加到对应状态的视图
         if (isFree) {
-            vacantRoomsContainer.appendChild(card.cloneNode(true));
+            vacantRoomsContainer.appendChild(createRoomCard(room));
         } else {
-            occupiedRoomsContainer.appendChild(card.cloneNode(true));
+            occupiedRoomsContainer.appendChild(createRoomCard(room));
         }
     });
     
