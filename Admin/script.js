@@ -739,5 +739,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 requestRoomDetailInfo(roomId);
             });
         }
-    }, 10000); // 每10秒刷新一次
+    }, 5000); // 每5秒刷新一次
 });
