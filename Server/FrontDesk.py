@@ -1,4 +1,4 @@
-import pymysql
+import sqlite3
 from datetime import datetime
 
 
@@ -10,9 +10,9 @@ class FrontDesk:
     @staticmethod
     def get_busy_rooms():
         busy_rooms = set()
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-        cursor.execute("SHOW TABLES LIKE 'clients'")  # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='clients';")  # 检查表是否存在
         result = cursor.fetchone()
         if result:
             search_table_query = f"""
@@ -31,9 +31,9 @@ class FrontDesk:
     @staticmethod
     def get_all_cost(room_id, check_in_time, check_out_time):
         costs = 0
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-        cursor.execute("SHOW TABLES LIKE 'rdr'")  # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='rdr';")  # 检查表是否存在
         result = cursor.fetchone()
         if result:
             search_table_query = f"""
@@ -53,15 +53,15 @@ class FrontDesk:
 
     @staticmethod
     def get_last_record(room_id):  # 查询最后一次使用时风速: high, medium, low
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-        cursor.execute("SHOW TABLES LIKE 'rdr'")  # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='rdr';")  # 检查表是否存在
         result = cursor.fetchone()
         if result:
             search_table_query = f"""
                     SELECT *
                     FROM rdr
-                    WHERE 房间号 = %s
+                    WHERE 房间号 = ?
                     AND 结束时间 IS NULL
                     ORDER BY 开始时间 DESC
                     LIMIT 1;
@@ -76,18 +76,18 @@ class FrontDesk:
 
     @staticmethod
     def update_record(record, cur_time, cost):
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-        cursor.execute("SHOW TABLES LIKE 'rdr'")  # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='rdr';")  # 检查表是否存在
         result = cursor.fetchone()
         if result:
             update_query = f"""
                     UPDATE rdr
-                    SET 结束时间 = %s, 费用 = %s
-                    WHERE 房间号 = %s
-                    AND 开始时间 = %s;
+                    SET 结束时间 = ?, 费用 = ?
+                    WHERE 房间号 = ?
+                    AND 开始时间 = ?;
                     """
-            cursor.execute(update_query, (cur_time, cost, record[0], record[3]))
+            cursor.execute(update_query, (cur_time, cost, record[0], record[6]))
             connection.commit()
         cursor.close()
         connection.close()
@@ -95,15 +95,15 @@ class FrontDesk:
     @staticmethod
     def get_time(user_name):
         times = []
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-        cursor.execute("SHOW TABLES LIKE 'clients'")  # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='clients';")  # 检查表是否存在
         result = cursor.fetchone()
         if result:
             search_table_query = f"""
                         SELECT 入住时间, 结账时间
                         FROM clients
-                        WHERE 用户名 = %s
+                        WHERE 用户名 = ?
                         ORDER BY 入住时间 DESC
                         LIMIT 1;
                         """
@@ -138,7 +138,7 @@ class FrontDesk:
             self.update_record(result, turn_off_time, bill)
 
     def open_room(self, customer_name, customer_id, room_id, current_time):
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
         create_table_query = f"""
                             CREATE TABLE IF NOT EXISTS clients
@@ -152,7 +152,7 @@ class FrontDesk:
                             );
                         """
         insert_query = f"""
-                            INSERT INTO clients (用户名, 用户ID, 房间号, 入住时间) VALUES (%s, %s, %s, %s)
+                            INSERT INTO clients (用户名, 用户ID, 房间号, 入住时间) VALUES (?, ?, ?, ?)
                             """
         cursor.execute(create_table_query)
         cursor.execute(insert_query, (customer_name, customer_id, room_id, current_time))
@@ -170,40 +170,40 @@ class FrontDesk:
             available_rooms = list(set(self.rooms) - set(busy_rooms))
             if len(available_rooms) != 0:
                 self.open_room(customer_name, customer_id, available_rooms[0], current_time)
-                return {"allocate_room": str(available_rooms[0])}
-            return {"allocate_room": ""}
+                return {"status": "OK", "allocate_room": str(available_rooms[0])}
+            return {"status": "ERROR", "allocate_room": ""}
         else:
             if room_id in busy_rooms:
-                return {"allocate_room": ""}
+                return {"status": "ERROR", "allocate_room": ""}
             else:
                 self.open_room(customer_name, customer_id, room_id, current_time)
-                return {"allocate_room": str(room_id)}
+                return {"status": "OK", "allocate_room": str(room_id)}
 
-    def query_fee_records(self, customer_name):  # 供Process_CheckOut调用
+    def query_fee_records(self, roomId):  # 供Process_CheckOut调用
         current_time = datetime.now()
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
         search_table_query = f"""
-                SELECT 房间号, 入住时间
+                SELECT 入住时间
                 FROM clients
-                WHERE 用户名 = '{customer_name}'
+                WHERE 房间号 = ?
                 ORDER BY 入住时间 DESC;
                 """
-        cursor.execute(search_table_query)
+        cursor.execute(search_table_query, (roomId,))
         res = cursor.fetchone()
         costs = 0
         room_id = ""
         if len(res) != 0:
-            check_in_time = res[1]
-            room_id = res[0]
+            check_in_time = res[0]
+            room_id = roomId
             check_out_time = current_time
             costs = self.get_all_cost(room_id, check_in_time, check_out_time)
             # 生成账单详单
             update_query = f"""
                     UPDATE clients
-                    SET 结账时间 = %s, 总费用 = %s
-                    WHERE 房间号 = %s
-                    AND 入住时间 = %s;
+                    SET 结账时间 = ?, 总费用 = ?
+                    WHERE 房间号 = ?
+                    AND 入住时间 = ?;
                     """
             cursor.execute(update_query, (check_out_time, costs, room_id, check_in_time))
             connection.commit()

@@ -30,13 +30,27 @@ async def room_request(request, ws):
             #空调开机
             if data["state"] == "on":
                 central_conditioner = CentralConditioner()
-                result = central_conditioner.set_speed_request(roomId, data["speed"], data["now_temp"], data["set_temp"], data["mode"])
-                await ws.send(json.dumps({"state": "on",  "bill": result["bill"]}))
+                if data["speed"] == 0:
+                    speed = "low"
+                elif data["speed"] == 1:
+                    speed = "medium"
+                elif data["speed"] == 2:
+                    speed = "high"
+                result = central_conditioner.set_speed_request(roomId, speed, data["now_temp"], data["set_temp"], data["mode"])
+                if result["state"] == "on":
+                    # 如果开机成功，记录到数据库
+                    pass
+                else:
+                    await ws.send(json.dumps({"state": result["state"],  "bill": result["bill"]}))
             #空调关机
             elif data["state"] == "off":
                 central_conditioner = CentralConditioner()
                 result = central_conditioner.delete_server(roomId)
-                await ws.send(json.dumps({"state": result["state"], "bill": result["bill"]}))
+                if result["state"] == "off":
+                    # 如果关机成功，记录到数据库
+                    await ws.send(json.dumps({"state": result["state"], "bill": result["bill"]}))
+                else:
+                    await ws.send(json.dumps({"state": result["state"], "bill": result["bill"]}))
 
     except Exception as e:
         print(f"Connection error: {e}")
@@ -61,12 +75,14 @@ async def checkin_request(request, ws):
             # 000表示自动分配房间
             front_desk = FrontDesk()
             if data["roomId"] == "000":
+                print("Auto allocating room")
                 result = front_desk.create_accommodation_order(data["client_name"], data["client_id"])
+                print(f"Allocation result: {result}")
                 await ws.send(json.dumps({"status": result["status"], "allocate_room": result["allocate_room"]}))
             else:
                 # 处理指定房间的入住请求
                 result = front_desk.create_accommodation_order(data["client_name"], data["client_id"], data["roomId"])
-                await ws.send(json.dumps({"status": result["status"], "roomId": result["allocate_room"]}))
+                await ws.send(json.dumps({"status": result["status"], "allocate_room": result["allocate_room"]}))
     except Exception as e:
         print(f"Connection error: {e}")
     finally:
@@ -83,7 +99,8 @@ async def checkout_request(request, ws):
             data = json.loads(data_str)
             print(f"Received from front desk: {data}")
             # 前台接待处理退房请求
-            result = FrontDesk.query_fee_records(data["roomId"])
+            front_desk = FrontDesk()
+            result = front_desk.query_fee_records(data["roomId"])
             await ws.send(json.dumps({"status": "OK", "bill": result["bill"]}))
     except Exception as e:
         print(f"Connection error: {e}")
@@ -102,6 +119,7 @@ async def bill_request(request, ws):
             print(f"Received from front desk: {data}")
             # 前台接待处理查询账单请求
             result = RDR.getbill(data["roomId"])
+            print(f"Bill result: {result}")
             await ws.send(json.dumps({"bill": result["bill"]}))
     except Exception as e:
         print(f"Connection error: {e}")
@@ -119,7 +137,7 @@ async def use_list_request(request, ws):
             data = json.loads(data_str)
             print(f"Received from front desk: {data}")
             # 前台接待处理查询详单请求
-            result = RDR.getrdr(data["roomId"], data["type"], data["userId"], data["startTime"], data["endTime"])
+            result = RDR.getrdr(data["roomId"], data["type"], data["usrId"], data["startTime"], data["endTime"])
             uselist = result["uselist"]
             await ws.send(json.dumps({"uselist": uselist}))
     except Exception as e:

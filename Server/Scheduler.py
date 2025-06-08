@@ -1,5 +1,5 @@
 from datetime import datetime
-import pymysql
+import sqlite3
 
 class Scheduler:
     def __init__(self, get_last_record, update_record, max_running=10, wait_seconds=10):
@@ -15,6 +15,7 @@ class Scheduler:
 
         self.active_pool = {}   # 正在送风的房间 {room_id: {"fan_speed": str, "start_time": datetime}}
         self.waiting_pool = {}  # 等待队列 {room_id: {"fan_speed": str, "wait_start": datetime, "priority": int}}
+        self.idle_pool = set()     # 空闲服务对象池
 
     def get_fan_speed_priority(self, fan_speed):
         """
@@ -22,46 +23,39 @@ class Scheduler:
         """
         return {'high': 1, 'medium': 2, 'low': 3}.get(fan_speed, 99)
 
-    def start_room(self, room_id, fan_speed):
+    def start_room(self, room_id, fan_speed, now_temperature, target_temperature, mode):
         """
         开始为某个房间送风：调用 CentralConditioner 记录开始送风时间，并加入 active_pool
         """
         now = datetime.now()
         # self.cc.create_record(room_id, fan_speed, now)
         self.active_pool[room_id] = {"fan_speed": fan_speed, "start_time": now}
-
-         # 更新数据库状态：空调开启
-        Scheduler.create_or_update_status(
+        # 更新数据库状态：空调开启
+        self.update_status(
             room_id=room_id,
             ac_state="on",
             fan_speed=fan_speed,
-            current_temp=25.0,  # TODO: 从外部系统获取当前温度
-            target_temp=22.0,   # TODO: 从请求中获取目标温度
-            cost=0.0,           # 开机时费用为0
-            work_mode="cool"    # TODO: 从请求中获取工作模式
+            current_temp=now_temperature,
+            target_temp=target_temperature,
+            work_mode=mode,
+            cost=0
         )
+        
 
-    def stop_room(self, room_id):
+    def stop_room(self, room_id, fan_speed, now_temperature, target_temperature, mode):
         """
         停止某个房间送风：调用 CentralConditioner 结算并更新记录
         """
-        now = datetime.now()
-        record = self.get_last_record(room_id)
-        if record:
-            factor = {"high": 1, "medium": 2, "low": 3}.get(record[2], 3)
-            bill = round((now - record[3]).total_seconds() / 60 / factor, 2)
-            self.update_record(record, now, bill)
-
-             # 更新数据库状态：空调关闭
-            Scheduler.create_or_update_status(
-                room_id=room_id,
-                ac_state="off",
-                fan_speed=record[2],
-                current_temp=25.0,  # TODO: 从外部系统获取
-                target_temp=22.0,   # TODO: 从 record 或请求中获取
-                cost=bill,
-                work_mode="cool"
-            )
+        # 更新数据库状态：空调关闭
+        Scheduler.update_status(
+            room_id=room_id,
+            ac_state="off",
+            fan_speed=fan_speed,
+            current_temp=now_temperature,
+            target_temp=target_temperature,
+            work_mode=mode,
+            cost=0
+        )
 
     def evict_by_priority(self, new_priority):
         """
@@ -76,9 +70,11 @@ class Scheduler:
 
         for priority, start_time, room_id in candidates:
             if priority > new_priority:
-                self.stop_room(room_id)
+                fan_speed = self.active_pool[room_id]["fan_speed"]
+                record_ac = self.get_last_record_from_acstatus(room_id)
+                self.stop_room(room_id, fan_speed, record_ac[3], record_ac[4], record_ac[6])
                 self.waiting_pool[room_id] = {
-                    "fan_speed": self.active_pool[room_id]["fan_speed"],
+                    "fan_speed": fan_speed,
                     "wait_start": datetime.now(),
                     "priority": priority
                 }
@@ -94,11 +90,14 @@ class Scheduler:
             return None
         longest = max(self.active_pool.items(), key=lambda x: x[1]["start_time"])
         room_id = longest[0]
-        self.stop_room(room_id)
+        fan_speed = self.active_pool[room_id]["fan_speed"]
+        
+        record_ac = self.get_last_record_from_acstatus(room_id)
+        self.stop_room(room_id, fan_speed, record_ac[3], record_ac[4], record_ac[6])
         self.waiting_pool[room_id] = {
-            "fan_speed": self.active_pool[room_id]["fan_speed"],
+            "fan_speed": fan_speed,
             "wait_start": datetime.now(),
-            "priority": self.get_fan_speed_priority(self.active_pool[room_id]["fan_speed"])
+            "priority": self.get_fan_speed_priority(fan_speed)
         }
         del self.active_pool[room_id]
         return room_id
@@ -118,10 +117,12 @@ class Scheduler:
             eligible.sort()  # 优先选等待最久、优先级最高的
             _, _, room_id = eligible[0]
             fan_speed = self.waiting_pool[room_id]["fan_speed"]
+            
+            record_ac = self.get_last_record_from_acstatus(room_id)
             del self.waiting_pool[room_id]
-            self.start_room(room_id, fan_speed)
+            self.start_room(room_id, fan_speed, record_ac[3], record_ac[4], record_ac[6])
 
-    def update_request(self, room_id, fan_speed):
+    def update_request(self, room_id, fan_speed, now_temperature, target_temperature, mode):
         """
         风速变更或开机处理逻辑
         :return: 状态字典 {"state": "on"/"wait", "speed": str, "evicted": room_id}
@@ -130,18 +131,25 @@ class Scheduler:
 
         if room_id in self.active_pool:
             # 正在服务 → 停止旧服务
-            self.stop_room(room_id)
+            self.stop_room(room_id, fan_speed, now_temperature, target_temperature, mode)
             del self.active_pool[room_id]
+        elif room_id in self.waiting_pool:
+            # 在等待队列中 → 停止旧服务
+            del self.waiting_pool[room_id]
+        else:
+            # 新请求 → 检查空闲池
+            if room_id in self.idle_pool:
+                self.idle_pool.discard(room_id)
 
         if len(self.active_pool) < self.max_running:
             # 还有空闲服务位
-            self.start_room(room_id, fan_speed)
+            self.start_room(room_id, fan_speed, now_temperature, target_temperature, mode)
             return {"state": "on", "speed": fan_speed, "evicted": None}
 
         # 开始调度逻辑
         evicted = self.evict_by_priority(new_priority)
         if evicted:
-            self.start_room(room_id, fan_speed)
+            self.start_room(room_id, fan_speed, now_temperature, target_temperature, mode)
             return {"state": "on", "speed": fan_speed, "evicted": evicted}
 
         # 无法调度 → 放入等待队列
@@ -150,6 +158,15 @@ class Scheduler:
             "wait_start": datetime.now(),
             "priority": new_priority
         }
+        self.update_status(
+            room_id=room_id,
+            ac_state="wait",
+            fan_speed=fan_speed,
+            current_temp=now_temperature,
+            target_temp=target_temperature,
+            work_mode=mode,
+            cost=0
+        )
         return {"state": "wait", "speed": fan_speed, "evicted": None}
 
     def stop_request(self, room_id):
@@ -157,25 +174,31 @@ class Scheduler:
         关机请求处理
         :return: 状态字典 {"state": "off", "speed": "", "bill": 0}
         """
+        record_ac = self.get_last_record_from_acstatus(room_id)
         if room_id in self.active_pool:
-            # self.stop_room(room_id)
+            fan_speed = self.active_pool[room_id]["fan_speed"]
+            self.stop_room(room_id, fan_speed, record_ac[3], record_ac[4], record_ac[6])
             del self.active_pool[room_id]
+            self.idle_pool.add(room_id)
             self.assign_waiting_room()
         elif room_id in self.waiting_pool:
             del self.waiting_pool[room_id]
+            self.idle_pool.add(room_id)
+
+            record_ac = self.get_last_record_from_acstatus(room_id)
 
             # 若在等待队列中关机，也应更新状态为 off
-            Scheduler.create_or_update_status(
+            Scheduler.update_status(
                 room_id=room_id,
                 ac_state="off",
                 fan_speed="",
-                current_temp=25.0,  # TODO: 获取真实值
-                target_temp=22.0,
-                cost=0.0,
-                work_mode="cool"
+                current_temp="",
+                target_temp="",
+                work_mode="off",
+                cost=0
             )
 
-        return {"state": "off", "speed": "", "bill": 0}
+        return {"state": "off", "speed": "", "bill": record_ac[4] if record_ac else 0}
 
     def tick(self):
         """
@@ -204,19 +227,18 @@ class Scheduler:
         }
     
     @staticmethod
-    def create_or_update_status(room_id, ac_state, fan_speed, current_temp, target_temp, cost, work_mode):
+    def create_status():
         """
-        创建或更新空调状态表 ac_status 中的记录
+        创建空调状态表 ac_status 中的记录
         """
-        # 自动判断工作模式
-        if current_temp > target_temp:
-            work_mode = "cool"
-        elif current_temp < target_temp:
-            work_mode = "heat"
-
-        connection = pymysql.connect(host="localhost", user="root", password="123456", database="soft_air")
+        connection = sqlite3.connect("soft_air.db")
         cursor = connection.cursor()
-
+        # 创建 ac_status 表，如果不存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ac_status';")
+        result = cursor.fetchone()
+        if result:
+            return
+        # 如果表不存在，则创建
         create_table_query = """
             CREATE TABLE IF NOT EXISTS ac_status (
                 `房间号` VARCHAR(64) PRIMARY KEY,
@@ -224,33 +246,56 @@ class Scheduler:
                 `风速` VARCHAR(64),
                 `当前温度` DECIMAL(5,2),
                 `目标温度` DECIMAL(5,2),
-                `费用` DECIMAL(18,2),
-                `工作模式` VARCHAR(64)
+                `工作模式` VARCHAR(64),
+                `费用` DECIMAL(10,2) DEFAULT 0
             );
         """
         cursor.execute(create_table_query)
 
-        # 尝试更新已有记录
-        update_query = """
-            UPDATE ac_status
-            SET `空调状态` = %s,
-                `风速` = %s,
-                `当前温度` = %s,
-                `目标温度` = %s,
-                `费用` = %s,
-                `工作模式` = %s
-            WHERE `房间号` = %s;
-        """
-        cursor.execute(update_query, (ac_state, fan_speed, current_temp, target_temp, cost, room_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
 
-        if cursor.rowcount == 0:
-            # 若没有更新成功（说明该房间记录不存在），则插入新记录
-            insert_query = """
-                INSERT INTO ac_status (`房间号`, `空调状态`, `风速`, `当前温度`, `目标温度`, `费用`, `工作模式`)
-                VALUES (%s, %s, %s, %s, %s, %s, %s);
-            """
-            cursor.execute(insert_query, (room_id, ac_state, fan_speed, current_temp, target_temp, cost, work_mode))
+    def update_status(self, room_id, ac_state, fan_speed, current_temp, target_temp, work_mode, cost):
+        """
+        更新空调状态表 ac_status 中的记录
+        """
+        connection = sqlite3.connect("soft_air.db")
+        cursor = connection.cursor()
+
+        update_query = """
+            INSERT OR REPLACE INTO ac_status (房间号, 空调状态, 风速, 当前温度, 目标温度, 工作模式, 费用)
+            VALUES (?, ?, ?, ?, ?, ?, ?);
+        """
+        cursor.execute(update_query, (room_id, ac_state, fan_speed, current_temp, target_temp, work_mode, cost))
 
         connection.commit()
         cursor.close()
         connection.close()
+
+    def get_last_record_from_acstatus(self, room_id):
+        """
+        从 ac_status 表获取指定房间的最后一条记录
+        """
+        connection = sqlite3.connect("soft_air.db")
+        cursor = connection.cursor()
+        query = "SELECT * FROM ac_status WHERE 房间号 = ? LIMIT 1;"
+        cursor.execute(query, (room_id,))
+        record = cursor.fetchone() #record
+        cursor.close()
+        connection.close()
+        return record
+    
+    # 根据前端传来的房间号获取房间空调状态
+    def get_room_status(self, room_id):
+        record_ac = self.get_last_record_from_acstatus(room_id)
+        if record_ac:
+            return {
+                "state": record_ac[1],
+                "speed": record_ac[2],
+                "current_temp": record_ac[3],
+                "target_temp": record_ac[4],
+                "cost": record_ac[5],
+                "work_mode": record_ac[6]
+            }
+        return None
