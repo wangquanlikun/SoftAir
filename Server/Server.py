@@ -16,7 +16,8 @@ manager = mg.Manager()
 @app.websocket('/ws/room')
 async def room_request(request, ws):
     roomId = request.args.get('roomId', "000")
-    room_ws[roomId] = ws
+    if roomId != "000":
+        room_ws[roomId] = ws
     print(f"Client connected to room: {roomId}")
     try:
         while True:
@@ -25,13 +26,17 @@ async def room_request(request, ws):
                 break
             data = json.loads(msg)
             ret = airconSchedule.request(data)
-            await ws.send(json.dumps(ret))
+            if roomId == data['roomId']:
+                await ws.send(json.dumps(ret))
+            else: # '000': 管理员
+                if data['roomId'] in room_ws: # 指定的房间发送
+                    await room_ws[data['roomId']].send(json.dumps(ret))
     except Exception as e:
         print(f"Connection error in room {roomId}: {e}")
     finally:
         if roomId in room_ws:
             del room_ws[roomId]
-        airconSchedule.request({'roomId': roomId, 'state': "off", 'speed': 0, 'mode': "off", 'now_temp': 0, 'set_temp': 0, 'new_request': 1})
+            airconSchedule.request({'roomId': roomId, 'state': "off", 'speed': 0, 'mode': "off", 'now_temp': 0, 'set_temp': 0, 'new_request': 1})
         print(f"Client disconnected from room: {roomId}")
 
 @app.websocket('/ws/checkin')

@@ -153,6 +153,12 @@ class ClientGUI(QMainWindow):
 
         layout.addStretch(1)
 
+        room_id_layout = QHBoxLayout()
+        room_id_label = QLabel(f"当前房间号: {self.room.get_room_id()}")
+        room_id_label.setAlignment(Qt.AlignCenter)
+        room_id_layout.addWidget(room_id_label, stretch=1)
+        layout.addLayout(room_id_layout)
+
         # 上方：两个LCD并排显示
         top_layout = QHBoxLayout()
         # 设定温度显示

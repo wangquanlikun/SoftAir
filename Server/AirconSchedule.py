@@ -7,12 +7,13 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 class ScheduleRoom:
-    def __init__(self, ID, state, fan_speed, mode, set_temp, now_temp, running_time=0, waiting_time=0):
+    def __init__(self, ID, state, fan_speed, mode, set_temp, now_temp, running_time=0, billing_time=0, waiting_time=0):
         self.ID = ID
         self.state = state # 'running' or 'waiting' or 'off'
         self.fan_speed = fan_speed # 0: Low, 1: Medium, 2: High
         self.running_time = running_time # in seconds
         self.waiting_time = waiting_time
+        self.billing_time = billing_time
         self.mode = mode # 'cool' or 'heat'
         self.set_temp = set_temp
         self.now_temp = now_temp
@@ -25,11 +26,11 @@ class Scheduler:
         self.waiting_queue = []
 
         self.MAX_SERVING = 3  # 最大同时服务的房间数
-        self.CIRCULATION_INTERVAL = 10  # 时间片间隔
+        self.CIRCULATION_INTERVAL = 15  # 时间片间隔
 
-        self.low_per_minute = 2.0  # 每分钟的低速费用
-        self.medium_per_minute = 3.0  # 每分钟的中速费用
-        self.high_per_minute = 6.0  # 每分钟的高速费用
+        self.low_per_minute = 2.0  # 每分钟的低速费用（6倍率）
+        self.medium_per_minute = 3.0  # 每分钟的中速费用（6倍率）
+        self.high_per_minute = 6.0  # 每分钟的高速费用（6倍率）
 
         self.database = None
         self.cursor = None
@@ -181,23 +182,26 @@ class Scheduler:
             # 更新所有服务中房间的运行时间
             for room in self.serving_queue:
                 room.running_time += time_delta
+                room.billing_time += time_delta
 
-            # 每5秒处理一次计费
-            if current_time - last_bill_time >= 5:
+            # 每10秒处理一次计费
+            if current_time - last_bill_time >= 10:
                 for room in self.serving_queue:
-                    if room.fan_speed == 0:
-                        self.add_bill(room.ID, self.low_per_minute / 12)
-                    elif room.fan_speed == 1:
-                        self.add_bill(room.ID, self.medium_per_minute / 12)
-                    elif room.fan_speed == 2:
-                        self.add_bill(room.ID, self.high_per_minute / 12)
-                    self.send_state_message(room.ID, "on", self.search_bill(room.ID))
+                    if room.billing_time > 10:
+                        room.billing_time -= 10
+                        if room.fan_speed == 0:
+                            self.add_bill(room.ID, self.low_per_minute / 6)
+                        elif room.fan_speed == 1:
+                            self.add_bill(room.ID, self.medium_per_minute / 6)
+                        elif room.fan_speed == 2:
+                            self.add_bill(room.ID, self.high_per_minute / 6)
+                        self.send_state_message(room.ID, "on", self.search_bill(room.ID))
                 last_bill_time = current_time
 
             self.time_slice_scheduling(time_delta)
 
             last_time = current_time
-            time.sleep(2)  # 避免CPU使用率过高
+            time.sleep(1)  # 避免CPU使用率过高
 
     def time_slice_scheduling(self, time_delta):
         """执行时间片调度"""
@@ -210,6 +214,7 @@ class Scheduler:
             if min_waiting:
                 min_waiting.state = 'running'
                 min_waiting.running_time = 0
+                min_waiting.billing_time = 0
                 self.serving_queue.append(min_waiting)
                 self.waiting_queue.remove(min_waiting)
                 self.send_state_message(min_waiting.ID, "on", self.search_bill(min_waiting.ID))
@@ -227,6 +232,7 @@ class Scheduler:
                     self.serving_queue.remove(max_serving)
                     self.send_state_message(max_serving.ID, "off", self.search_bill(max_serving.ID))
                     room.running_time = 0
+                    room.billing_time = 0
                     room.state = 'running'
                     self.serving_queue.append(room)
                     self.waiting_queue.remove(room)

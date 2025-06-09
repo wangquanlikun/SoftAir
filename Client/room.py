@@ -12,13 +12,15 @@ class Room:
         self.mode = None
         self.now_cost_times_six = 0 # 当前费用的六倍，由于3不能被整除
 
+        self.TIME_SPEED = 6 # 时间流速倍率
+
         self.refresh_temp_timer = QTimer()
         cast(pyqtBoundSignal, self.refresh_temp_timer.timeout).connect(self.change_temp)
-        self.refresh_temp_timer.start(60000)
+        self.refresh_temp_timer.start(int(60000 / self.TIME_SPEED))
 
         self.calculate_cost_timer = QTimer()
         cast(pyqtBoundSignal, self.calculate_cost_timer.timeout).connect(self.calculate_cost)
-        self.calculate_cost_timer.start(60000)
+        self.calculate_cost_timer.start(int(60000 / self.TIME_SPEED))
 
     def set_room_id(self, room_id):
         self.room_id = room_id
@@ -43,9 +45,9 @@ class Room:
             self.mode = mode
             self.running = True
             self.refresh_temp_timer.stop()
-            self.refresh_temp_timer.start(60000)
+            self.refresh_temp_timer.start(int(60000 / self.TIME_SPEED))
             self.calculate_cost_timer.stop()
-            self.calculate_cost_timer.start(60000)
+            self.calculate_cost_timer.start(int(60000 / self.TIME_SPEED))
         else:
             self.set_temp = temp
             self.fan_speed = wind
@@ -56,9 +58,9 @@ class Room:
         self.set_temp = 25.0
         self.fan_speed = 0
         self.refresh_temp_timer.stop()
-        self.refresh_temp_timer.start(60000)
+        self.refresh_temp_timer.start(int(60000 / self.TIME_SPEED))
         self.calculate_cost_timer.stop()
-        self.calculate_cost_timer.start(60000)
+        self.calculate_cost_timer.start(int(60000 / self.TIME_SPEED))
 
     def change_temp(self):
         if self.running:
