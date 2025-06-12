@@ -244,7 +244,8 @@ class ClientGUI(QMainWindow):
         self.set_temp = 25.0
         self.lcd_set.display(f'{self.set_temp:.1f}')
         self.request_service(type=1)
-        self.room.set_wind(self.set_temp, self.fan_index, self.mode)
+        if self.power_on and (not self.sleep_mode):
+            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
     def _update_mode_icon(self):
         file = "snowflake.svg" if self.mode == 'cool' else "sun.svg"
@@ -258,14 +259,16 @@ class ClientGUI(QMainWindow):
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service(type=0)
-            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
+            if self.power_on and (not self.sleep_mode):
+                self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp < 30:
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service(type=0)
-            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
+            if self.power_on and (not self.sleep_mode):
+                self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
     def decrease_set_temp(self):
         if self.mode == 'cool' and self.set_temp > 18:
@@ -274,21 +277,23 @@ class ClientGUI(QMainWindow):
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service(type=0)
-            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
+            if self.power_on and (not self.sleep_mode):
+                self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp > 25:
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
             self.request_service(type=0)
-            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
+            if self.power_on and (not self.sleep_mode):
+                self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
     def cycle_fan(self):
         self.fan_index = (self.fan_index + 1) % len(self.fan_speeds_show)
         self.request_service(type=2)
-        self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         if self.power_on and (not self.sleep_mode):
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+            self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         else:
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 停止送风")
 
