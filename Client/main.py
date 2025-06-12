@@ -17,7 +17,7 @@ class ClientGUI(QMainWindow):
         super().__init__()
         self.setWindowTitle(" SoftAir Client ")
         self.setWindowIcon(QIcon("./resource/wind.ico"))
-        self.setMinimumSize(1100, 550)
+        self.setMinimumSize(900, 550)
         self.setMaximumSize(1200, 650)
 
         # 房间
@@ -304,7 +304,7 @@ class ClientGUI(QMainWindow):
         # 计时：刷新计时器为1s，1s到后只发送最后1次的指令参数
         if self.send_timer.isActive():
             self.send_timer.stop()
-        self.send_timer.start(1000)
+        self.send_timer.start(200) # 实际为200ms 与1min的倍率缩放一致
 
     def _send_request(self):
         if self.request_list:
@@ -369,7 +369,17 @@ class ClientGUI(QMainWindow):
                 return
             self.sleep_mode = False
             self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
-            self.request_service(type=1)
+            self.client.send_message(RequestMessage(
+                request_on_off="on",
+                request_temp=self.set_temp,
+                request_mode=self.mode,
+                request_fan=self.fan_index,
+                request_type=1,
+                now_room_temp= self.current_temp
+            ))
+            if self.send_timer.isActive():
+                self.send_timer.stop()
+                self.request_list.clear()
             self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
 if __name__ == '__main__':

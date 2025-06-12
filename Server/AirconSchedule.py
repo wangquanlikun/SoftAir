@@ -26,7 +26,7 @@ class Scheduler:
         self.waiting_queue = []
 
         self.MAX_SERVING = 3  # 最大同时服务的房间数
-        self.CIRCULATION_INTERVAL = 15  # 时间片间隔
+        self.CIRCULATION_INTERVAL = 20  # 时间片间隔（模拟2min）
 
         self.low_per_minute = 2.0  # 每分钟的低速费用（6倍率）
         self.medium_per_minute = 3.0  # 每分钟的中速费用（6倍率）
