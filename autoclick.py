@@ -180,10 +180,12 @@ def min22click():
     print(22)
     pyautogui.click(click_position[2][0])
     pyautogui.click(click_position[2][0]) # 3 : Off
+    pyautogui.click(click_position[3][0]) #########
 
 def min23click():
     print(23)
     pyautogui.click(click_position[4][0]) # 5 : Off
+    pyautogui.click(click_position[3][0]) #########
 
 def min24click():
     print(24)

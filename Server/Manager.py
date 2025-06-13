@@ -4,6 +4,15 @@ class Manager:
     def __init__(self):
         self.database = sqlite3.connect('database.db')
         self.cursor = self.database.cursor()
+        self.cursor.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS EARNING(
+                roomId TEXT,
+                op_time TEXT,
+                money REAL
+            )
+            '''
+        )
 
     def show(self, data):
         start_time = data.get('start_time')
@@ -11,15 +20,22 @@ class Manager:
 
         if start_time and end_time:
             self.cursor.execute('''
-                SELECT * FROM USELIST WHERE op_time >= ? AND op_time <= ?
+                SELECT * FROM EARNING WHERE op_time >= ? AND op_time <= ?
             ''', (start_time, end_time))
         else:
-            self.cursor.execute('SELECT * FROM USELIST')
-        all_use = self.cursor.fetchall()
-        all_use_str = ""
-        fan_speed = {0: 'Low', 1: 'Medium', 2: 'High'}
-        for use in all_use:
-            all_use_str += f"""Room {use[0]}, User {use[1]}, Time {use[2]} : {use[3]}, set {use[4]}℃ at {use[5]}℃, 
-            using fan speed {fan_speed[use[6]]}, {use[7]} mode\n"""
-        return {'content': all_use_str}
+            self.cursor.execute('SELECT * FROM EARNING')
+        all_earn = self.cursor.fetchall()
+        all_earn_str = ""
+        for earn in all_earn:
+            all_earn_str += f"-- 房间号 {earn[0]} 在时间点 {earn[1]} 新增营收 {earn[2]} 元\n"
+        room_earn = {}
+        for earn in all_earn:
+            if earn[0] not in room_earn:
+                room_earn[earn[0]] = 0
+            room_earn[earn[0]] += earn[2]
+        room_earn_str = f"从 {start_time} 到 {end_time}, 酒店空调营收情况为：\n" if start_time and end_time \
+            else "酒店空调营收情况为：\n"
+        for room, earn in room_earn.items():
+            room_earn_str += f"- 房间号 {room} 总营收： {earn} 元\n"
+        return {'content': room_earn_str + "\n具体营收情况：\n" + all_earn_str}
 

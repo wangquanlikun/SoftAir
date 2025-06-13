@@ -51,6 +51,8 @@ class Scheduler:
         self.loop.run_forever()
 
     def add_bill(self, roomId, bill):
+        self.cursor.execute('''INSERT INTO EARNING (roomId, op_time, money) VALUES (?, ?, ?)''',
+                            (roomId, datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), bill))
         bill += self.search_bill(roomId)  # 累加当前账单
         self.cursor.execute('''UPDATE ROOM SET bill = ? WHERE roomId = ?''', (bill, roomId))
         self.database.commit()

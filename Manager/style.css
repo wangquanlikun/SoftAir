@@ -177,6 +177,10 @@ body {
   padding: 1rem;
 }
 
+.report-content p {
+  white-space: pre-line; /* 保留换行符并允许文本自动换行 */
+}
+
 .report-item {
   margin-bottom: 0.5rem;
   padding: 0.5rem 0;
