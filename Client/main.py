@@ -257,17 +257,19 @@ class ClientGUI(QMainWindow):
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+
             self.request_service(type=0)
             if self.power_on and (not self.sleep_mode):
+                self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
                 self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp < 30:
             self.set_temp += 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+
             self.request_service(type=0)
             if self.power_on and (not self.sleep_mode):
+                self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
                 self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
     def decrease_set_temp(self):
@@ -275,17 +277,19 @@ class ClientGUI(QMainWindow):
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+
             self.request_service(type=0)
             if self.power_on and (not self.sleep_mode):
+                self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
                 self.room.set_wind(self.set_temp, self.fan_index, self.mode)
         elif self.mode == 'heat' and self.set_temp > 25:
             self.set_temp -= 1
             self.lcd_set.display(f'{self.set_temp:.1f}')
             self.sleep_mode = False
-            self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
+
             self.request_service(type=0)
             if self.power_on and (not self.sleep_mode):
+                self.lbl_fan_speed.setText(f"风速: {self.fan_speeds_show[self.fan_index]} 正在送风")
                 self.room.set_wind(self.set_temp, self.fan_index, self.mode)
 
     def cycle_fan(self):
@@ -309,7 +313,7 @@ class ClientGUI(QMainWindow):
         # 计时：刷新计时器为1s，1s到后只发送最后1次的指令参数
         if self.send_timer.isActive():
             self.send_timer.stop()
-        self.send_timer.start(200) # 实际为200ms 与1min的倍率缩放一致
+        self.send_timer.start(10) # 实际为10ms 因为1min的倍率缩放
 
     def _send_request(self):
         if self.request_list:

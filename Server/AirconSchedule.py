@@ -26,7 +26,7 @@ class Scheduler:
         self.waiting_queue = []
 
         self.MAX_SERVING = 3  # 最大同时服务的房间数
-        self.CIRCULATION_INTERVAL = 20  # 时间片间隔（模拟2min）
+        self.CIRCULATION_INTERVAL = 19.8  # 时间片间隔（模拟2min）
 
         self.low_per_minute = 2.0  # 每分钟的低速费用（6倍率）
         self.medium_per_minute = 3.0  # 每分钟的中速费用（6倍率）
@@ -184,11 +184,11 @@ class Scheduler:
                 room.running_time += time_delta
                 room.billing_time += time_delta
 
-            # 每10秒处理一次计费
-            if current_time - last_bill_time >= 10:
+            # 每0.2秒处理一次计费
+            if current_time - last_bill_time >= 0.2:
                 for room in self.serving_queue:
-                    if room.billing_time > 10:
-                        room.billing_time -= 10
+                    if room.billing_time > 9.6:
+                        room.billing_time -= 9.6
                         if room.fan_speed == 0:
                             self.add_bill(room.ID, self.low_per_minute / 6)
                         elif room.fan_speed == 1:
@@ -201,7 +201,7 @@ class Scheduler:
             self.time_slice_scheduling(time_delta)
 
             last_time = current_time
-            time.sleep(1)  # 避免CPU使用率过高
+            time.sleep(0.1)  # 避免CPU使用率过高
 
     def time_slice_scheduling(self, time_delta):
         """执行时间片调度"""
@@ -210,14 +210,14 @@ class Scheduler:
 
         if len(self.serving_queue) < self.MAX_SERVING:
             # 如果服务队列未满，直接将等待队列中等待服务时长最小的对象加入
-            min_waiting = min(self.waiting_queue, key=lambda r: r.waiting_time, default=None)
-            if min_waiting:
-                min_waiting.state = 'running'
-                min_waiting.running_time = 0
-                min_waiting.billing_time = 0
-                self.serving_queue.append(min_waiting)
-                self.waiting_queue.remove(min_waiting)
-                self.send_state_message(min_waiting.ID, "on", self.search_bill(min_waiting.ID))
+            min_remain_waiting = min(self.waiting_queue, key=lambda r: r.waiting_time, default=None)
+            if min_remain_waiting:
+                min_remain_waiting.state = 'running'
+                min_remain_waiting.running_time = 0
+                min_remain_waiting.billing_time = 0
+                self.serving_queue.append(min_remain_waiting)
+                self.waiting_queue.remove(min_remain_waiting)
+                self.send_state_message(min_remain_waiting.ID, "on", self.search_bill(min_remain_waiting.ID))
 
         # 检查是否有等待队列中的房间可以进入服务队列
         for room in self.waiting_queue:

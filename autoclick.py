@@ -43,7 +43,6 @@ click_position = [
     ]
 ]
 def min0click():
-    print(0)
     pyautogui.click(click_position[0][0]) # 1 : On
 
 def min1click():
@@ -80,7 +79,8 @@ def min4click():
 
 def min5click():
     print(5)
-    pyautogui.click(click_position[0][4]) # 1 : High
+    pyautogui.click(click_position[0][4])
+    pyautogui.click(click_position[0][0]) # 1 : High
 
 def min6click():
     print(6)
@@ -109,7 +109,8 @@ def min9click():
     pyautogui.click(click_position[3][2])
     pyautogui.click(click_position[3][2])
     pyautogui.click(click_position[3][2]) # 4 : 25 -> 18
-    pyautogui.click(click_position[3][4]) # 4 : High
+    pyautogui.click(click_position[3][4])
+    pyautogui.click(click_position[3][0]) # 4 : High
 
 def min10click():
     print(10)
@@ -122,14 +123,14 @@ def min11click():
 
 def min12click():
     print(12)
-    pyautogui.click(click_position[4][4]) # 5 : Low
+    pyautogui.click(click_position[4][4])
+    pyautogui.click(click_position[4][0]) # 5 : Low
 
 def min13click():
     print(13)
 
 def min14click():
     print(14)
-    pyautogui.click(click_position[0][0])
     pyautogui.click(click_position[0][0]) # 1 : Off
     pyautogui.click(click_position[2][2]) # 3 : 25 -> 24
     pyautogui.click(click_position[2][4])
@@ -140,7 +141,8 @@ def min15click():
     pyautogui.click(click_position[4][2])
     pyautogui.click(click_position[4][2]) # 5 : 22 -> 20
     pyautogui.click(click_position[4][4])
-    pyautogui.click(click_position[4][4]) # 5 : High
+    pyautogui.click(click_position[4][4])
+    pyautogui.click(click_position[4][0]) # 5 : High
 
 def min16click():
     print(16)
@@ -176,6 +178,7 @@ def min21click():
 
 def min22click():
     print(22)
+    pyautogui.click(click_position[2][0])
     pyautogui.click(click_position[2][0]) # 3 : Off
 
 def min23click():
@@ -197,7 +200,7 @@ if __name__ == "__main__":
 
     while True:
         now = time.time()
-        minute = int((now - startTime) // 11) # 假设每11秒钟点击一次
+        minute = int((now - startTime) // 10.2) # 假设每10.2秒钟点击一次
         
         if minute == 1 and minute1:
             min1click()
@@ -301,6 +304,6 @@ if __name__ == "__main__":
             minute25 = False
             break
 
-        time.sleep(1)  # 每秒检查一次
+        time.sleep(0.01)  # 每0.01秒检查一次
 
     print("Finished clicking all minutes.")
