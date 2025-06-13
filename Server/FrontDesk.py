@@ -87,10 +87,12 @@ class FrontDesk:
                 SELECT * FROM USELIST WHERE userId = ? AND roomId = ?
             ''', (usrId, roomId))
             use_list = self.cursor.fetchall()
-            fan_speed = {0: 'Low', 1: 'Medium', 2: 'High'}
+            fan_speed = {0: '低', 1: '中', 2: '高'}
+            status = {'on': '开机', 'off': '关机', 'cool': '制冷', 'heat': '制热', 'pause': '暂停'}
             for use in use_list:
-                uselist += f"""Room {use[0]}, User {use[1]}, Time {use[2]} : {use[3]}, set {use[4]}℃ at {use[5]}℃, 
-            using fan speed {fan_speed[use[6]]}, {use[7]} mode\n"""
+                uselist += f"- 房间号 {use[0]}, 住户ID {use[1]}\n"
+                uselist += f"\t时间 {use[2]} : {status[use[3]]}, 设定温度 {use[4]}℃, 房间温度 {round(float(use[5]), 1)}℃\n"
+                uselist += f"\t风速 {fan_speed[use[6]]}, {status[use[7]]} 模式, 总花费 {use[8]} 元\n"
 
         elif type == 'room':
             start_time = data['start_time']
@@ -102,10 +104,12 @@ class FrontDesk:
             else:
                 self.cursor.execute('SELECT * FROM USELIST WHERE roomId = ?', (roomId,))
             use_list = self.cursor.fetchall()
-            fan_speed = {0: 'Low', 1: 'Medium', 2: 'High'}
+            fan_speed = {0: '低', 1: '中', 2: '高'}
+            status = {'on': '开机', 'off': '关机', 'cool': '制冷', 'heat': '制热', 'pause': '暂停'}
             for use in use_list:
-                uselist += f"""Room {use[0]}, User {use[1]}, Time {use[2]} : {use[3]}, set {use[4]}℃ at {use[5]}℃, 
-            using fan speed {fan_speed[use[6]]}, {use[7]} mode\n"""
+                uselist += f"- 房间号 {use[0]}, 住户ID {use[1]}, \n"
+                uselist += f"\t时间 {use[2]} : {status[use[3]]}, 设定温度 {use[4]}℃, 房间温度 {round(float(use[5]), 1)}℃\n"
+                uselist += f"\t风速 {fan_speed[use[6]]}, {status[use[7]]} 模式, 总花费 {use[8]} 元\n"
 
         return {'uselist': uselist}
 

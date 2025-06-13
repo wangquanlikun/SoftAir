@@ -262,7 +262,8 @@ class AirconSchedule:
                 set_temp REAL,
                 now_temp REAL,
                 fan_speed INTEGER,
-                mode TEXT
+                mode TEXT,
+                total_bill REAL DEFAULT 0.0
             )
         ''')
         self.database.commit()
@@ -284,49 +285,55 @@ class AirconSchedule:
             if state == 'on' and self.scheduler.request_on(roomId, speed, set_temp, now_temp, mode):
                 self.cursor.execute('''SELECT client_id FROM ROOM WHERE roomId = ?''', (roomId,))
                 client_id = self.cursor.fetchone()
+                ret_bill = 0.0
                 if client_id:
                     client_id = client_id[0]
                     op_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
+                    bill = self.cursor.fetchone()
                     self.cursor.execute('''
-                        INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (roomId, client_id, op_time, state, set_temp, now_temp, speed, mode))
+                        INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode, total_bill)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (roomId, client_id, op_time, state, set_temp, now_temp, speed, mode, bill[0] if bill else 0.0))
                     self.database.commit()
-                self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
-                bill = self.cursor.fetchone()
-                return {'state': state, 'bill': bill[0] if bill else 0.0}
+                    ret_bill = bill[0] if bill else 0.0
+                return {'state': state, 'bill': ret_bill}
             else: # 'off' / 'pause' / 'on' but request failed
                 if state == 'off' or state == 'pause':
                     self.scheduler.request_off(roomId)
                 self.cursor.execute('''SELECT client_id FROM ROOM WHERE roomId = ?''', (roomId,))
                 client_id = self.cursor.fetchone()
+                ret_bill = 0.0
                 if client_id:
                     client_id = client_id[0]
                     op_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
+                    bill = self.cursor.fetchone()
                     self.cursor.execute('''
-                        INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (roomId, client_id, op_time, 'off', set_temp, now_temp, speed, mode))
+                        INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode, total_bill)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (roomId, client_id, op_time, 'off', set_temp, now_temp, speed, mode, bill[0] if bill else 0.0))
                     self.database.commit()
-                self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
-                bill = self.cursor.fetchone()
-                return {'state': 'off' if state != 'pause' else 'pause', 'bill': bill[0] if bill else 0.0}
+                    ret_bill = bill[0] if bill else 0.0
+                return {'state': 'off' if state != 'pause' else 'pause', 'bill': ret_bill}
 
         else:
             self.scheduler.update_request(roomId, set_temp, now_temp, mode)
             self.cursor.execute('''SELECT client_id FROM ROOM WHERE roomId = ?''', (roomId,))
             client_id = self.cursor.fetchone()
+            ret_bill = 0.0
             if client_id:
                 client_id = client_id[0]
                 op_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
+                bill = self.cursor.fetchone()
                 self.cursor.execute('''
-                    INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (roomId, client_id, op_time, state, set_temp, now_temp, speed, mode))
+                    INSERT INTO USELIST (roomId, userId, op_time, operation, set_temp, now_temp, fan_speed, mode, total_bill)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (roomId, client_id, op_time, state, set_temp, now_temp, speed, mode, bill[0] if bill else 0.0))
                 self.database.commit()
-            self.cursor.execute('''SELECT bill FROM ROOM WHERE roomId = ?''', (roomId,))
-            bill = self.cursor.fetchone()
-            return {'state': state, 'bill': bill[0] if bill else 0.0}
+                ret_bill = bill[0] if bill else 0.0
+            return {'state': state, 'bill': ret_bill}
 
     def querySchedule(self):
         serving_queue = []

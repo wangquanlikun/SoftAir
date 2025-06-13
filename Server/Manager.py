@@ -13,6 +13,7 @@ class Manager:
             )
             '''
         )
+        self.database.commit()
 
     def show(self, data):
         start_time = data.get('start_time')
