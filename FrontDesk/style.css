@@ -363,7 +363,10 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   width: 90%;
   max-width: 500px;
+  max-height: 80vh; /* 限制最大高度为视口高度的80% */
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .close-button {
@@ -405,11 +408,37 @@ body {
   font-size: 14px;
 }
 
+/* 账单详单内容区域样式 */
+#bill-detail-content {
+  overflow-y: auto; /* 添加垂直滚动条 */
+  max-height: calc(60vh - 100px); /* 限制高度，为按钮和标题预留空间 */
+  margin-bottom: 15px;
+}
+
+.uselist-content {
+  width: 100%;
+}
+
+.uselist-content pre {
+  white-space: pre-wrap; /* 确保文本自动换行 */
+  word-break: break-word; /* 长单词断行 */
+  overflow-x: auto; /* 水平方向可滚动 */
+  max-width: 100%;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background-color: #f8f9fa;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+}
+
 .modal-actions {
+  margin-top: auto; /* 将操作按钮推到底部 */
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
 }
 
 .modal-button {

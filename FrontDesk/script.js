@@ -720,17 +720,29 @@ function processBillResponse(data) {
 // 处理详单响应
 function processUselistResponse(data) {
     if (modalBillDetail.style.display === 'flex') {
+        // 清空之前的查询选项，确保详单内容可以完整显示
+        detailQueryOptions.style.display = 'none';
+        
+        // 根据详单长度调整容器高度
+        const uselist = data.uselist || '暂无详细使用记录';
+        
         billDetailContent.innerHTML = `
             <div class="uselist-content">
                 <h4>使用记录:</h4>
-                <pre>${data.uselist || '暂无详细使用记录'}</pre>
+                <pre>${uselist}</pre>
             </div>
         `;
+        
+        // 确保弹窗在内容加载后居中显示
+        setTimeout(() => {
+            modalBillDetail.scrollTop = 0;
+        }, 100);
     }
 }
 
 // 打印账单/详单
 function printBillDetail() {
+    const billTitle = billDetailTitle.textContent;
     const printContent = billDetailContent.innerHTML;
     const printWindow = window.open('', '_blank');
     
@@ -743,11 +755,11 @@ function printBillDetail() {
                 body { font-family: Arial, sans-serif; padding: 20px; }
                 h1 { text-align: center; color: #07B2D9; }
                 .bill-summary p { margin: 10px 0; }
-                pre { white-space: pre-wrap; }
+                pre { white-space: pre-wrap; word-break: break-word; max-width: 100%; overflow-x: auto; }
             </style>
         </head>
         <body>
-            <h1>${billDetailTitle.textContent}</h1>
+            <h1>${billTitle}</h1>
             ${printContent}
         </body>
         </html>
